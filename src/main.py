@@ -3,6 +3,7 @@ from threading import Thread
 
 
 class CryptoAribtrage():
+    #Intialize with API data obtained from GDAX site.
     def __init__(self, auth_client=False, API_key=None, API_secret=None, API_pass=None, API_url=None):
         if auth_client:
             self.authClient = gdax.AuthenticatedClient(API_key, API_secret, API_pass, API_url)
@@ -47,7 +48,7 @@ class CryptoAribtrage():
                           'product_id': sell_currency[0]
                           }
 
-
+            #If the program is set to execute a trade, put through the orders.
             if execute:
                 self.authClient.buy(buyParams)
                 if next_order():
@@ -57,7 +58,8 @@ class CryptoAribtrage():
                         self.authClient.buy(Xparams)
                 if next_order():
                     self.authClient.sell(sellParams)
-
+            
+            #print the trade parameters
             print(buyParams)
             print(Xparams)
             print(sellParams)
@@ -87,6 +89,8 @@ class CryptoAribtrage():
 
             products = ["ETH-USD", "BTC-USD", "ETH-BTC"]
             quotes = threaded_process(3, products)
+            
+            #Pull bid/ask quotes for ETH, BTC, and ETH_BTC
             ETH = quotes["ETH-USD"]
             BTC = quotes["BTC-USD"]
             ETH_BTC = quotes["ETH-BTC"]
@@ -103,7 +107,7 @@ class CryptoAribtrage():
             buy_BTC_arb = (ETH_bid / ETH_BTC_ask) / BTC_ask
             buy_ETH_arb = BTC_bid * ETH_BTC_bid / ETH_ask
 
-
+            #If Bitcoin is underpriced by a certain threshold, execute a trade.
             if buy_BTC_arb > threshold:
                 buy_currency = ('BTC-USD', BTC_ask)
                 sell_currency = ('ETH-USD', ETH_bid)
@@ -111,6 +115,7 @@ class CryptoAribtrage():
                 execute_trade(dollars, buy_currency, sell_currency,
                               exchange_currency)
                 break
+            #If Ethereum is underpriced by a certain threshold, execute a trade.
             if buy_ETH_arb > threshold:
                 buy_currency = ('ETH-USD', ETH_ask)
                 sell_currency = ('BTC-USD', BTC_bid)
@@ -118,6 +123,7 @@ class CryptoAribtrage():
                 execute_trade(dollars, buy_currency, sell_currency,
                               exchange_currency)
                 break
+    #Method for cancelling trades.
     def cancel_trades(self):
         orders = self.authClient.get_orders()
         for order in orders:
@@ -126,9 +132,7 @@ class CryptoAribtrage():
             except Exception as e:
                 print(e)
 
-"""
-Set threshold as a decimal here. 0.004 is 40 basis points.
-"""
+#Set threshold as a decimal here. 0.004 is 40 basis points.
 if __name__ == "__main__":
 
     tradebot = CryptoAribtrage(False)
